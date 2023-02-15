@@ -16,17 +16,34 @@ class NN():
 
 
        def backward(self, Y, y_hat):
-              prev = 1
+              prev = None
               prev_weight = None
               new_weights = []
+              # loop through layers from back to front
               for i, layer in enumerate(self.layers[::-1]):
+                     # i=0 is the condition where we're focusing on the last layer
+                     # here, we're trying to calculate dldz because dldz is present
+                     # in the calculation of dldw and dldb for that layer, and we also need dldz of 
+                     # the current layer to calculate the dldz of the previous (next) layer
+
+                     # if its the last layer, dlossdz = dlossdy * dydz (dydz is the same as dAdz)
+                     # if we're at an intermediate layer, dlossdz[l] =  dlossdz[l+1] * dz[l+1]dA[l] * dA[l]dz[l]
+                     # dlossdz[l+1] is stored in `prev`` because we need in future calculation
+                     # dz[l+1]dA[l] is from something like Z3 = A2@W3T + B3T, so the result is W3T, which is the previous (technically next) layer's weight matrix
+                     # dA[l]dz[l] is from A = f(Z) where f is the activation function
+                     # A = f(Z), Z = A[l-1]W.T + B.T
                      dldz = self.loss.gradient(Y, y_hat) if i == 0 else (prev @ prev_weight)
                      dldz *= layer.activation.gradient(layer.Z)
 
+                     # store dldz for the current layer to use in the next iteration
                      prev = dldz
+
+                     # dldw = dldz * dzdw
                      dldw = dldz.T @ layer.A_prev
                      # i thought it was dldw = dldz @ layer.A_prev at first
                      dldb = dldz.mean(axis=0) # why the mean dim/axis 0?
+
+                     # store current weight matrix for next iterations calculations
                      prev_weight = layer.W
 
                      layer.W -= self.lr*dldw
