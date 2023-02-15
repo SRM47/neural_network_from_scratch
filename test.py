@@ -16,13 +16,13 @@ def create_Y(X):
 
 def main():
        n_x, n_y = 3, 1
-       nn = NN(layers = (n_x, 4, 2, n_y), 
-               activations = (Tanh(), Sigmoid(), Base()),
+       nn = NN(layers = (n_x, 2, 4, 2, n_y), 
+               activations = (Tanh(), ReLU(), ReLU(), Base()),
                loss = hMSE(),
-               lr=0.001,)
+               lr=0.002,)
 
        # create training data
-       N = 1000 # sample size
+       N = 10000 # sample size
        X = np.random.rand(N, n_x)
        Y = create_Y(X)
 

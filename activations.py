@@ -1,15 +1,17 @@
 import numpy as np
+from abc import ABC, abstractmethod
 
-class Activation():
+class Activation(ABC):
        def __init__(self):
               self.temp = 0
               
-
+       @abstractmethod
        def __call__(self, data):
-              return data
+              return 
        
+       @abstractmethod
        def gradient(self, data):
-              return 1
+              return 
        
 class Sigmoid(Activation):
        def __init__(self):
@@ -49,6 +51,14 @@ class ReLU(Activation):
 class Base(Activation):
        def __init__(self):
               super().__init__()
+       
+
+       def __call__(self, data):
+              return data
+       
+
+       def gradient(self, data):
+              return 1
 
 
 def main():
