@@ -28,7 +28,7 @@ class NN():
 
                      # if its the last layer, dlossdz = dlossdy * dydz (dydz is the same as dAdz)
                      # if we're at an intermediate layer, dlossdz[l] =  dlossdz[l+1] * dz[l+1]dA[l] * dA[l]dz[l]
-                     # dlossdz[l+1] is stored in `prev`` because we need in future calculation
+                     # dlossdz[l+1] is stored in `prev` because we need in future calculation
                      # dz[l+1]dA[l] is from something like Z3 = A2@W3T + B3T, so the result is W3T, which is the previous (technically next) layer's weight matrix
                      # dA[l]dz[l] is from A = f(Z) where f is the activation function
                      # A = f(Z), Z = A[l-1]W.T + B.T
