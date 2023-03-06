@@ -9,8 +9,8 @@ class Linear():
               output: number of nodes in current layer
               """
               # first row of the weights matrix is all weights going to the first node in the next layer
-              self.W = np.random.rand(output_num, input_num)
-              self.b = np.zeros(output_num)
+              self.W = np.random.normal(0, 2/input_num, size=(output_num, input_num)) # Kaiming
+              self.b = np.random.normal(0, 2/input_num, size=(output_num))
               self.Z: Optional[np.ndarray] = None # type | type
               self.A_prev: Optional[np.ndarray] = None
               self.A: Optional[np.ndarray] = None

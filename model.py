@@ -11,11 +11,13 @@ class NN():
               self.layers = []
               self.lr = lr
               self.loss = loss
+              self.beta_s = 0.9
+              self.beta_m = 0.9
               for i in range(len(layers)-1):
                      self.add_layer(layers[i], layers[i+1], activations[i])
 
 
-       def backward(self, Y, y_hat):
+       def backward(self, Y, y_hat, adam_params, counter):
               prev = None
               prev_weight = None
               new_weights = []
@@ -46,34 +48,74 @@ class NN():
                      # store current weight matrix for next iterations calculations
                      prev_weight = layer.W
 
-                     layer.W -= self.lr*dldw
-                     layer.b -= self.lr*dldb
-                     new_weights.append((self.lr*dldw, self.lr*dldb))
+                     
+                     # layer.W -= self.lr*dldw.mean(axis=0)
+                     # layer.b -= self.lr*dldb.mean(axis=0)
+                     new_weights.append((dldw.mean(axis=0), dldb.mean(axis=0)))
               
+              # implement Adam Optimizer
               for i, layer in enumerate(self.layers[::-1]):
                      updates = new_weights[i]
-                     layer.W -= updates[0]
-                     layer.b -= updates[1]
-              
-       def train(self, X, Y, num_epochs):
+                     g_w = updates[0]
+                     g_b = updates[1]
+                     momentum_bias_correction = 1/(1-np.power(self.beta_m, counter))
+                     squares_bias_correction = 1/(1-np.power(self.beta_s, counter))
+                     m_w_prev, s_w_prev, m_b_prev, s_b_prev = adam_params[i][0], adam_params[i][1], adam_params[i][2], adam_params[i][3] 
+
+                     # for the weights
+                     m_w = (self.beta_m)*m_w_prev + (1-self.beta_m)*g_w
+                     s_w = (self.beta_s)*s_w_prev + (1-self.beta_s)*np.power(g_w, 2)
+                     layer.W -= self.lr * (m_w/momentum_bias_correction)/(np.sqrt(s_w/squares_bias_correction) + 10e-8) # updates[0]
+
+                     # for the bias
+                     m_b = (self.beta_m)*m_b_prev + (1-self.beta_m)*g_b
+                     s_b = (self.beta_s)*s_b_prev + (1-self.beta_s)*np.power(g_b, 2)
+                     layer.b -= self.lr * (m_b/momentum_bias_correction)/(np.sqrt(s_b/squares_bias_correction) + 10e-8) # updates[1]
+
+                     adam_params[i] = (m_w, s_w, m_b, s_b)
+
+       def shuffled_batch(self, a, b, batch_num):
+              assert len(a) == len(b)
+              p = np.random.permutation(len(a))
+              batch_size = len(p)//batch_num
+              for i in range(0,len(p), batch_size):
+                     yield a[i:i+batch_size, : ], b[i: i+batch_size, : ]
+       
+       def train(self, X, Y, num_epochs, batch_num = 1000, method = "stochastic"):
+              assert method in ["stochastic", "minibatch", "batch"]
 
               loss_over_time = np.array([])
 
-              # # batch gradient descent
-              # for epoch in range(num_epochs):
-              #        Y_hat = self.forward(X)
-              #        loss_over_time.append(self.loss(Y, Y_hat))
-              #        self.backward(Y, Y_hat)
+              if method == "minibatch":
+                     for epoch in range(num_epochs):
+                            adam_params = [(0,0,0,0) for _ in self.layers]
+                            counter = 0
+                            for x,y in self.shuffled_batch(X, Y, batch_num):
+                                   counter += 1
+                                   y_hat = self.forward(x)
+                                   loss_over_time = np.append(loss_over_time, [self.loss(y, y_hat)])
+                                   self.backward(y, y_hat, adam_params, counter)
+              elif method == "batch":
+                     adam_params = [(0,0,0,0) for _ in self.layers]
+                     for epoch in range(num_epochs):
+                            Y_hat = self.forward(X)
+                            loss_over_time.append(self.loss(Y, Y_hat))
+                            self.backward(Y, Y_hat, adam_params, epoch + 1)
+              else:
+                     for epoch in range(num_epochs):
+                            adam_params = [(0,0,0,0) for _ in self.layers]
+                            counter = 0
+                            for x,y in zip(X,Y):
+                                   counter += 1
+                                   x = x.reshape(1, x.shape[0]) # must be row vector
+                                   y = y.reshape(1, y.shape[0]) # must be row vector as well
+                                   y_hat = self.forward(x)
+                                   loss_over_time = np.append(loss_over_time, [self.loss(y, y_hat)])
+                                   self.backward(y, y_hat, adam_params, counter)
 
-              # stochastic gradient descent
-              for epoch in range(num_epochs):
-                     for x,y in zip(X,Y):
-                            x = x.reshape(1, x.shape[0]) # must be row vector
-                            y = y.reshape(1, y.shape[0]) # must be row vector as well
-                            y_hat = self.forward(x)
-                            loss_over_time = np.append(loss_over_time, [self.loss(y, y_hat)])
-                            self.backward(y, y_hat)
+
               return loss_over_time
+
 
        def predict(self, X):
               return self.forward(X)

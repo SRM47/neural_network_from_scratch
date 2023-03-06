@@ -4,8 +4,9 @@ from typing import Optional
 from activations import *
 from layers import Linear
 from model import NN
-from losses import hMSE
+from losses import *
 import seaborn as sns
+import scipy 
 
 
 def create_Y(X):
@@ -17,9 +18,9 @@ def create_Y(X):
 def main():
        n_x, n_y = 3, 1
        nn = NN(layers = (n_x, 2, 4, 2, n_y), 
-               activations = (Tanh(), ReLU(), ReLU(), Base()),
+               activations = (ReLU(), Tanh(), ReLU(), Sigmoid()),
                loss = hMSE(),
-               lr=0.002,)
+               lr=0.004,)
 
        # create training data
        N = 10000 # sample size
@@ -27,7 +28,7 @@ def main():
        Y = create_Y(X)
 
        # train
-       losses = nn.train(X, Y, 1)
+       losses = nn.train(X, Y, 3)
        g = sns.lineplot(data=losses)
        fig = g.get_figure()
        fig.savefig("loss.png")
