@@ -11,7 +11,7 @@ class NN():
               self.layers = []
               self.lr = lr
               self.loss = loss
-              self.beta_s = 0.9
+              self.beta_s = 0.999
               self.beta_m = 0.9
               for i in range(len(layers)-1):
                      self.add_layer(layers[i], layers[i+1], activations[i])
@@ -60,17 +60,18 @@ class NN():
                      g_b = updates[1]
                      momentum_bias_correction = 1/(1-np.power(self.beta_m, counter))
                      squares_bias_correction = 1/(1-np.power(self.beta_s, counter))
+
                      m_w_prev, s_w_prev, m_b_prev, s_b_prev = adam_params[i][0], adam_params[i][1], adam_params[i][2], adam_params[i][3] 
 
                      # for the weights
                      m_w = (self.beta_m)*m_w_prev + (1-self.beta_m)*g_w
                      s_w = (self.beta_s)*s_w_prev + (1-self.beta_s)*np.power(g_w, 2)
-                     layer.W -= self.lr * (m_w/momentum_bias_correction)/(np.sqrt(s_w/squares_bias_correction) + 10e-8) # updates[0]
+                     layer.W -= self.lr * (m_w/momentum_bias_correction)/(np.sqrt(s_w/squares_bias_correction) + 1e-8) # updates[0]
 
                      # for the bias
                      m_b = (self.beta_m)*m_b_prev + (1-self.beta_m)*g_b
                      s_b = (self.beta_s)*s_b_prev + (1-self.beta_s)*np.power(g_b, 2)
-                     layer.b -= self.lr * (m_b/momentum_bias_correction)/(np.sqrt(s_b/squares_bias_correction) + 10e-8) # updates[1]
+                     layer.b -= self.lr * (m_b/momentum_bias_correction)/(np.sqrt(s_b/squares_bias_correction) + 1e-8) # updates[1]
 
                      adam_params[i] = (m_w, s_w, m_b, s_b)
 
@@ -79,7 +80,7 @@ class NN():
               p = np.random.permutation(len(a))
               batch_size = len(p)//batch_num
               for i in range(0,len(p), batch_size):
-                     yield a[i:i+batch_size, : ], b[i: i+batch_size, : ]
+                     yield a[p][i:i+batch_size, : ], b[p][i: i+batch_size, : ]
        
        def train(self, X, Y, num_epochs, batch_num = 1000, method = "stochastic"):
               assert method in ["stochastic", "minibatch", "batch"]
@@ -87,8 +88,8 @@ class NN():
               loss_over_time = np.array([])
 
               if method == "minibatch":
+                     adam_params = [(0,0,0,0) for _ in self.layers]
                      for epoch in range(num_epochs):
-                            adam_params = [(0,0,0,0) for _ in self.layers]
                             counter = 0
                             for x,y in self.shuffled_batch(X, Y, batch_num):
                                    counter += 1
@@ -102,8 +103,9 @@ class NN():
                             loss_over_time.append(self.loss(Y, Y_hat))
                             self.backward(Y, Y_hat, adam_params, epoch + 1)
               else:
+                     # loss carries over through epochs as well. 
+                     adam_params = [(0,0,0,0) for _ in self.layers]
                      for epoch in range(num_epochs):
-                            adam_params = [(0,0,0,0) for _ in self.layers]
                             counter = 0
                             for x,y in zip(X,Y):
                                    counter += 1

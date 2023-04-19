@@ -10,25 +10,30 @@ import scipy
 
 
 def create_Y(X):
-       # y = 5*x1 + 3*x2 + 3*x3
-       Y = 0.5*X[:, 0] + 0.4*X[:, 1] + 0.1*X[:, 2] 
-       return Y.reshape((Y.shape[0], 1))
+
+       Y_0 = 3*X[:, 0] - 0.4*np.power(X[:, 1],2) * 0.1*X[:, 2]
+       Y_0 = Y_0.reshape((Y_0.shape[0], 1))
+       Y_1 = -0.6*np.power(X[:, 0],2) + 7*np.power(X[:, 2],2)
+       Y_1 = Y_1.reshape((Y_1.shape[0], 1))
+       d = np.concatenate([Y_0, Y_1], axis=1)
+       return  d + np.random.normal(0,1, size=d.shape)
 
 
 def main():
-       n_x, n_y = 3, 1
-       nn = NN(layers = (n_x, 2, 4, 2, n_y), 
-               activations = (ReLU(), Tanh(), ReLU(), Sigmoid()),
+       n_x, n_y = 3, 2
+       nn = NN(layers = (n_x, 16, 32, 16, n_y), 
+               activations = (Tanh(), ReLU(), Tanh(), Base()),
                loss = hMSE(),
-               lr=0.004,)
+               lr=0.001,)
 
        # create training data
        N = 10000 # sample size
        X = np.random.rand(N, n_x)
        Y = create_Y(X)
+       # print(Y)
 
        # train
-       losses = nn.train(X, Y, 3)
+       losses = nn.train(X, Y, 10, batch_num = 100, method="minibatch")
        g = sns.lineplot(data=losses)
        fig = g.get_figure()
        fig.savefig("loss.png")
