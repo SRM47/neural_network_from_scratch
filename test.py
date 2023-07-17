@@ -4,10 +4,10 @@ from typing import Optional
 from activations import *
 from layers import Linear
 from model import NN
+from optimizers import Adam
 from losses import *
 import seaborn as sns
 import scipy 
-
 
 def create_Y(X):
 
@@ -23,8 +23,7 @@ def main():
        n_x, n_y = 3, 2
        nn = NN(layers = (n_x, 16, 32, 16, n_y), 
                activations = (Tanh(), ReLU(), Tanh(), Base()),
-               loss = hMSE(),
-               lr=0.001,)
+               loss_function = HMSELoss())
 
        # create training data
        N = 10000 # sample size
@@ -33,7 +32,8 @@ def main():
        # print(Y)
 
        # train
-       losses = nn.train(X, Y, 10, batch_num = 100, method="minibatch")
+       optim = Adam(nn, learning_rate = 0.001)
+       losses = nn.train(X, Y, 10, optim, batch_num = 100, method="minibatch")
        g = sns.lineplot(data=losses)
        fig = g.get_figure()
        fig.savefig("loss.png")
@@ -41,7 +41,7 @@ def main():
        # create testing data
        X_test = np.random.rand(5,n_x)
        Y_test = create_Y(X_test)
-       Y_hat = nn.predict(X_test)
+       Y_hat = nn(X_test)
        # my predictions are all very huge! idk why
        for y, y_hat in zip(Y_test, Y_hat):
               print(f"Guess: {y_hat} -> True: {y}")
