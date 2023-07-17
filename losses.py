@@ -1,63 +1,78 @@
 from abc import ABC, abstractmethod
+from typing import Optional, Union, Any
 import numpy as np
 
 class Loss(ABC):
+       """
+       The Loss class is an abstract class that scaffolds a loss function.
+
+       truth and prediction have the same shape (batch_size, num_output_features).
+       num_output_features is the number of neurons on the last layer of the network.
+       """
+
+       def __init__(self, reduction_function: str = "mean"):
+              assert reduction_function in ["mean", "sum"], \
+                     "The reduction function must be either `mean`, `sum`"
+              self.name: str = "Loss function abstract base class"
+              self.reduction: str = reduction_function
+
        @abstractmethod
-       def calculate(self, Y, Y_hat):
-              return
+       def calculate(self, truth: np.ndarray, prediction: np.ndarray) -> np.floating[Any]:
+              raise NotImplementedError(
+                     "The loss function is not yet implemented. \
+                     Use one of the implemented loss functions.")
        
        @abstractmethod
-       def gradient(self, Y, Y_hat):
-              return
-
-       def __call__(self, Y, Y_hat):
-              return self.calculate(Y, Y_hat)
-       
-
-class hMSE(Loss):
-       def __init__(self):
-              self.name = "hMSE"
-       
-       def calculate(self, Y, Y_hat):
-              return 0.5*np.power(Y_hat-Y, 2)
-       
-       def gradient(self, Y, Y_hat):
-              """ grad with respect to y_hat
+       def gradient(self, truth: np.ndarray, prediction: np.ndarray) -> np.ndarray:
               """
-              return Y_hat - Y
+              The gradient method implements the partial derivative:
 
-
-class MSE(Loss):
-       def __init__(self):
-              self.name = "MSE"
-       
-       def calculate(self, Y, Y_hat):
-              return np.power(Y_hat-Y, 2)
-       
-       def gradient(self, Y, Y_hat):
-              return 2*(Y_hat - Y)
-       
-
-
-class BinaryCrossEntropy(Loss):
-       def __init__(self):
-              self.name = "hMSE"
-       
-       def calculate(self, Y, Y_hat):
-              return 
-       
-       def gradient(self, Y, Y_hat):
-              """ grad with respect to y_hat
+              ∂Loss(truth, prediction)
+              ------------------------
+                     ∂prediction
               """
-              return 
+              raise NotImplementedError(
+                     "The gradient method of this loss function has not yet been implemented. \
+                     Use one of the implemented loss functions.")
+
+       def __call__(self, truth: np.ndarray, prediction: np.ndarray) -> np.floating[Any]:
+              return self.calculate(truth, prediction)
+       
+       def __repr__(self) -> str:
+              return self.name
        
 
+class HMSELoss(Loss):
+       def __init__(self, reduction_function: str = "mean"):
+              super().__init__(reduction_function)
+              self.name: str = "Half Mean Squared Error Loss"
+       
+       def calculate(self, truth: np.ndarray, prediction: np.ndarray) -> np.floating[Any]:
+              loss = 0.5 * np.power( prediction - truth , 2)
+              return np.sum(loss) if self.reduction == "sum" else np.mean(loss)
+       
+       def gradient(self, truth: np.ndarray, prediction: np.ndarray) -> np.ndarray:
+              loss = (prediction - truth) / (1 if self.reduction == "sum" else prediction.shape[1])
+              return loss
 
-def main():
-       return 0
+class MSELoss(Loss):
+       def __init__(self, reduction_function: str = "mean"):
+              super().__init__(reduction_function)
+              self.name: str = "Mean Squared Error Loss"
+       
+       def calculate(self, truth: np.ndarray, prediction: np.ndarray) -> np.floating[Any]:
+              loss = np.power( prediction - truth , 2)
+              return np.sum(loss) if self.reduction == "sum" else np.mean(loss)
+       
+       def gradient(self, truth: np.ndarray, prediction: np.ndarray) -> np.ndarray:
+              loss = 2 * (prediction - truth) / (1 if self.reduction == "sum" else prediction.shape[1])
+              return loss
+       
 
-if __name__ == "__main__":
-       main()
+class CrossEntropy(Loss):
+       def __init__(self, reduction_function: str = "mean"):
+              super().__init__(reduction_function)
+              self.name: str = "Multiclass Cross Entropy Loss"
 
        
 

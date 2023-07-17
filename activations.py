@@ -1,64 +1,67 @@
 import numpy as np
+from typing import Any
 from abc import ABC, abstractmethod
 
 class Activation(ABC):
-       def __init__(self):
-              self.temp = 0
+       """
+       This Activation abstract class scaffolds a layer's activation function
+       """
+       def __init__(self, name: str):
+              self.name = "Activation abstract bass class"
               
        @abstractmethod
-       def __call__(self, data):
+       def __call__(self, input):
               return 
        
        @abstractmethod
-       def gradient(self, data):
+       def gradient(self, input):
               return 
+       
+       def __repr__(self) -> str:
+              return self.name
        
 class Sigmoid(Activation):
        def __init__(self):
-              super().__init__()
+              super().__init__("Sigmoid")
        
-       def __call__(self, data):
-              return 1/(1 + np.exp(-data))
+       def __call__(self, input: np.ndarray) -> np.ndarray:
+              return 1/(1 + np.exp(-input))
 
-
-       def gradient(self, data):
-              return self(data)*(1-self(data))
+       def gradient(self, input: np.ndarray) -> np.ndarray:
+              return self(input)*(1-self(input))
        
 
 class Tanh(Activation):
        def __init__(self):
-              super().__init__()
+              super().__init__("Hyperbolic Tangent")
        
-       def __call__(self, data):
-              return np.tanh(data)
+       def __call__(self, input: np.ndarray) -> np.ndarray:
+              return np.tanh(input)
 
-
-       def gradient(self, data):
-              return 1-np.power(np.tanh(data), 2)
+       def gradient(self, input: np.ndarray) -> np.ndarray:
+              return 1-np.power(np.tanh(input), 2)
 
 class ReLU(Activation):
        def __init__(self):
-              super().__init__()
+              super().__init__("Rectified Linear Unit")
        
-       def __call__(self, data):
-              return np.maximum(0, data)
+       def __call__(self, input: np.ndarray) -> np.ndarray:
+              return np.maximum(0, input)
 
-       def gradient(self, data):
-              data[data<=0] = 0
-              data[data>0] = 1
-              return data
+       def gradient(self, input: np.ndarray) -> np.ndarray:
+              input[input<=0] = 0
+              input[input>0] = 1
+              return input
 
 class Base(Activation):
        def __init__(self):
-              super().__init__()
+              super().__init__("Identity")
        
-
-       def __call__(self, data):
-              return data
+       def __call__(self, input: np.ndarray) -> np.ndarray:
+              return input
        
-
-       def gradient(self, data):
-              return 1
+       def gradient(self, input: np.ndarray) -> float:
+              return 1.0
 
 
 def main():
