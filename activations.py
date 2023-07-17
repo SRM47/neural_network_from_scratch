@@ -10,11 +10,11 @@ class Activation(ABC):
               self.name = "Activation abstract bass class"
               
        @abstractmethod
-       def __call__(self, input):
+       def __call__(self, input) -> np.ndarray:
               return 
        
        @abstractmethod
-       def gradient(self, input):
+       def gradient(self, input) -> np.ndarray:
               return 
        
        def __repr__(self) -> str:

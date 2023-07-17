@@ -17,7 +17,7 @@ class Loss(ABC):
               self.reduction: str = reduction_function
 
        @abstractmethod
-       def calculate(self, truth: np.ndarray, prediction: np.ndarray) -> np.floating[Any]:
+       def calculate(self, truth: np.ndarray, prediction: np.ndarray):
               raise NotImplementedError(
                      "The loss function is not yet implemented. \
                      Use one of the implemented loss functions.")
@@ -35,11 +35,12 @@ class Loss(ABC):
                      "The gradient method of this loss function has not yet been implemented. \
                      Use one of the implemented loss functions.")
 
-       def __call__(self, truth: np.ndarray, prediction: np.ndarray) -> np.floating[Any]:
+       def __call__(self, truth: np.ndarray, prediction: np.ndarray):
               return self.calculate(truth, prediction)
        
        def __repr__(self) -> str:
               return self.name
+       
        
 
 class HMSELoss(Loss):
@@ -47,7 +48,7 @@ class HMSELoss(Loss):
               super().__init__(reduction_function)
               self.name: str = "Half Mean Squared Error Loss"
        
-       def calculate(self, truth: np.ndarray, prediction: np.ndarray) -> np.floating[Any]:
+       def calculate(self, truth: np.ndarray, prediction: np.ndarray):
               loss = 0.5 * np.power( prediction - truth , 2)
               return np.sum(loss) if self.reduction == "sum" else np.mean(loss)
        
@@ -60,7 +61,7 @@ class MSELoss(Loss):
               super().__init__(reduction_function)
               self.name: str = "Mean Squared Error Loss"
        
-       def calculate(self, truth: np.ndarray, prediction: np.ndarray) -> np.floating[Any]:
+       def calculate(self, truth: np.ndarray, prediction: np.ndarray):
               loss = np.power( prediction - truth , 2)
               return np.sum(loss) if self.reduction == "sum" else np.mean(loss)
        

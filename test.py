@@ -1,11 +1,12 @@
 import pandas as pd
 import numpy as np
 from typing import Optional
-from activations import *
+from activations import Tanh, ReLU, Base
 from layers import Linear
-from model import NN
+from model import ANN
 from optimizers import Adam
-from losses import *
+from losses import MSELoss, HMSELoss
+from train import Trainer
 import seaborn as sns
 import scipy 
 
@@ -20,32 +21,46 @@ def create_Y(X):
 
 
 def main():
-       n_x, n_y = 3, 2
-       nn = NN(layers = (n_x, 16, 32, 16, n_y), 
-               activations = (Tanh(), ReLU(), Tanh(), Base()),
-               loss_function = HMSELoss())
+       # Create the artificial neural network model.
+       n_x = 3
+       n_y = 2
+       layers = (n_x, 8, 16, 32, 16, 8, n_y)
+       activations = (ReLU(), ReLU(), ReLU(),ReLU(),ReLU(),ReLU())
+       model = ANN(layers, activations)
 
-       # create training data
-       N = 10000 # sample size
+       # Synthesize training data.
+       N = 100000
        X = np.random.rand(N, n_x)
        Y = create_Y(X)
-       # print(Y)
 
-       # train
-       optim = Adam(nn, learning_rate = 0.001)
-       losses = nn.train(X, Y, 10, optim, batch_num = 100, method="minibatch")
+       # Fit the model to the training data.
+       learning_rate = 0.0009
+       num_epochs = 10
+       trainer = Trainer(
+              optimizer = Adam(learning_rate=learning_rate),
+              loss_function = MSELoss(),
+              num_epochs = num_epochs,
+              batch_size = 64)
+       losses = trainer.train(
+              model = model,
+              input = X,
+              target = Y,
+              method = "minibatch",
+              plot_loss = True)
+       
+       # Plot loss over time.
        g = sns.lineplot(data=losses)
        fig = g.get_figure()
        fig.savefig("loss.png")
 
-       # create testing data
-       X_test = np.random.rand(5,n_x)
+       # Create testing data.
+       X_test = np.random.rand(5, n_x)
        Y_test = create_Y(X_test)
-       Y_hat = nn(X_test)
-       # my predictions are all very huge! idk why
-       for y, y_hat in zip(Y_test, Y_hat):
-              print(f"Guess: {y_hat} -> True: {y}")
 
+       # Use the model for inference.
+       predictions = model(X_test)
+       for y, y_hat in zip(Y_test, predictions):
+              print(f"Guess: {y_hat} -> True: {y}")
 
 if __name__ == "__main__":
        main()

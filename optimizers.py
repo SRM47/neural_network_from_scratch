@@ -1,12 +1,13 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 import numpy as np
+from model import ANN
 
 class Optimizer(ABC):
        """
        The Optimizer class is an abstract class that scaffolds an optimizer.
        """
-       def __init__(self, model, learning_rate: float = 0.1):
+       def __init__(self, model: Optional[ANN] = None, learning_rate: float = 0.1):
               self.model = model
               self.lr: float = learning_rate
 
@@ -14,21 +15,54 @@ class Optimizer(ABC):
        def step(self):
               raise NotImplementedError(
                      "This optimizer hasn't been implemented yet")
+
+       @abstractmethod
+       def zero_grad(self) -> bool:
+              raise NotImplementedError(
+                     "This optimizer hasn't been implemented yet")
+       
+       @abstractmethod
+       def reset(self):
+              raise NotImplementedError(
+                     "This optimizer hasn't been implemented yet")
+
+       def set_model(self, model: ANN):
+              self.model = model
+              self.reset()
        
 class Adam(Optimizer):
-       def __init__(self, model, learning_rate: float = 0.1):
+       def __init__(self, model: Optional[ANN] = None, learning_rate: float = 0.1, beta_s: float = 0.999, beta_m: float = 0.9):
               super().__init__(model, learning_rate)
-              self.params: list[tuple] = [(0,0,0,0) for _ in self.model.layers]
-              self.beta_s: float = 0.999
-              self.beta_m: float = 0.9
-              self.counter: int = 1
+              self.params: Optional[list[tuple]] = [(0,0,0,0) for _ in self.model.layers] if self.model else None
+              self.beta_s: float = beta_s
+              self.beta_m: float = beta_m
+              # Private variable used for 
+              self._counter: int = 1
+
+       def zero_grad(self) -> bool:
+              if not self.model: return False
+              params = []
+              for layer in self.model.layers[::-1]:
+                     layer.W_grad = None
+                     layer.b_grad = None
+                     params.append((0,0,0,0))
+              self.params = params
+              return True
+       
+       def reset(self):
+              if self.zero_grad():
+                     self.counter = 1
 
        def step(self):
+              if not self.model or not self.params:
+                     raise AttributeError("Optimizer must have a model. Use `set_model` to do so.")
+              
               for i, layer in enumerate(self.model.layers[::-1]):
                      g_w, g_b = layer.W_grad, layer.b_grad
+                     if (g_w is None or g_b is None): continue
 
-                     momentum_bias_correction = 1/(1-np.power(self.beta_m, self.counter))
-                     squares_bias_correction = 1/(1-np.power(self.beta_s, self.counter))
+                     momentum_bias_correction = 1/(1-np.power(self.beta_m, self._counter))
+                     squares_bias_correction = 1/(1-np.power(self.beta_s, self._counter))
 
                      m_w_prev, s_w_prev, m_b_prev, s_b_prev = self.params[i][0], self.params[i][1], self.params[i][2], self.params[i][3] 
 
@@ -43,4 +77,4 @@ class Adam(Optimizer):
                      layer.b -= self.lr * (m_b/momentum_bias_correction)/(np.sqrt(s_b/squares_bias_correction) + 1e-8) # updates[1]
 
                      self.params[i] = (m_w, s_w, m_b, s_b)
-              self.counter += 1
+              self._counter += 1

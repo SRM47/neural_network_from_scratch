@@ -32,7 +32,7 @@ class Linear():
               self.W_grad = weight_gradients
               self.b_grad = bias_gradients
 
-       def __call__(self, input: np.ndarray) -> Optional[np.ndarray]:
+       def __call__(self, input: np.ndarray) -> np.ndarray:
               # Store the output of the previous layer for backpropagation.
               self.A_prev = input
               self.Z = input @ self.W.T + self.b.T
