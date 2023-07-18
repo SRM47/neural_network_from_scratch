@@ -5,4 +5,4 @@ The code includes all of the basic building blocks of an artificial neural netwo
 
 The code is well-documented and easy to follow, making it a valuable resource for anyone who wants to learn more about how neural networks work.
 
-To play around with training your own neural network with this interface, run `train.py`
+To play around with training your own neural network with this interface, run `test.py`
