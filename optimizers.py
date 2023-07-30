@@ -51,7 +51,7 @@ class Adam(Optimizer):
        
        def reset(self):
               if self.zero_grad():
-                     self.counter = 1
+                     self._counter = 1
 
        def step(self):
               if not self.model or not self.params:
